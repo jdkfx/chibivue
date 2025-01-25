@@ -1,4 +1,4 @@
 export type componentOptions = {
-  render?: Function
-  setup?: () => Function
-}
+	render?: Function;
+	setup?: () => Function;
+};

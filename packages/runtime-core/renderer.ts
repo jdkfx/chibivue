@@ -1,201 +1,206 @@
 import { ReactiveEffect } from "../reactivity";
-import { Component, ComponentInternalInstance, createComponentInstance, InternalRenderFunction } from "./component";
-import { createVNode, normalizeVNode, Text, VNode } from "./vnode"
+import {
+	Component,
+	ComponentInternalInstance,
+	createComponentInstance,
+	InternalRenderFunction,
+} from "./component";
+import { createVNode, normalizeVNode, Text, VNode } from "./vnode";
 
 export interface RendererOptions<
-  HostNode = RendererNode,
-  HostElement = RendererElement
+	HostNode = RendererNode,
+	HostElement = RendererElement,
 > {
-  patchProp(el: HostElement, key: string, value: any): void;
-  createElement(type: string): HostNode
-  createText(text: string): HostNode
-  setText(node: HostNode, text: string): void
-  setElementText(node: HostNode, text: string): void
-  insert(child: HostNode, parent: HostNode, anchor?: HostNode | null): void
-  parentNode(node: HostNode): HostNode | null
+	patchProp(el: HostElement, key: string, value: any): void;
+	createElement(type: string): HostNode;
+	createText(text: string): HostNode;
+	setText(node: HostNode, text: string): void;
+	setElementText(node: HostNode, text: string): void;
+	insert(child: HostNode, parent: HostNode, anchor?: HostNode | null): void;
+	parentNode(node: HostNode): HostNode | null;
 }
 
 export interface RendererNode {
-  [key: string]: any
+	[key: string]: any;
 }
 
 export interface RendererElement extends RendererNode {}
 
 export type RootRenderFunction<HostElement = RendererElement> = (
-  vnode: Component,
-  container: HostElement,
-) => void
+	vnode: Component,
+	container: HostElement,
+) => void;
 
 export function createRenderer(options: RendererOptions) {
-  const {
-    patchProp: hostPatchProp,
-    createElement: hostCreateElement,
-    createText: hostCreateText,
-    setText: hostSetText,
-    insert: hostInsert,
-    parentNode: hostParentNode,
-  } = options
+	const {
+		patchProp: hostPatchProp,
+		createElement: hostCreateElement,
+		createText: hostCreateText,
+		setText: hostSetText,
+		insert: hostInsert,
+		parentNode: hostParentNode,
+	} = options;
 
-  const render: RootRenderFunction = (rootComponent, container) => {
-    const vnode = createVNode(rootComponent, {}, [])
-    patch(null, vnode, container)
-  }
+	const render: RootRenderFunction = (rootComponent, container) => {
+		const vnode = createVNode(rootComponent, {}, []);
+		patch(null, vnode, container);
+	};
 
-  const patch = (n1: VNode | null, n2: VNode, container: RendererElement) => {
-    const { type } = n2
-    if (type === Text) {
-      processText(n1, n2, container);
-    } else if (typeof type === 'string') {
-      processElement(n1, n2, container);
-    } else if (typeof type === 'object') {
-      processComponent(n1, n2, container);
-    } else {
-      // do nothing
-    }
-  }
+	const patch = (n1: VNode | null, n2: VNode, container: RendererElement) => {
+		const { type } = n2;
+		if (type === Text) {
+			processText(n1, n2, container);
+		} else if (typeof type === "string") {
+			processElement(n1, n2, container);
+		} else if (typeof type === "object") {
+			processComponent(n1, n2, container);
+		} else {
+			// do nothing
+		}
+	};
 
-  const processElement = (
-    n1: VNode | null,
-    n2: VNode,
-    container: RendererElement,
-  ) => {
-    if (n1 === null) {
-      mountElement(n2, container)
-    } else {
-      patchElement(n1, n2)
-    }
-  }
+	const processElement = (
+		n1: VNode | null,
+		n2: VNode,
+		container: RendererElement,
+	) => {
+		if (n1 === null) {
+			mountElement(n2, container);
+		} else {
+			patchElement(n1, n2);
+		}
+	};
 
-  const processComponent = (
-    n1: VNode | null,
-    n2: VNode,
-    container: RendererElement,
-  ) => {
-    if (n1 == null) {
-      mountComponent(n2, container)
-    } else {
-      updateComponent(n1, n2)
-    }
-  }
+	const processComponent = (
+		n1: VNode | null,
+		n2: VNode,
+		container: RendererElement,
+	) => {
+		if (n1 == null) {
+			mountComponent(n2, container);
+		} else {
+			updateComponent(n1, n2);
+		}
+	};
 
-  const mountComponent = (initialVNode: VNode, container: RendererElement) => {
-    const instance: ComponentInternalInstance = (initialVNode.component =
-      createComponentInstance(initialVNode))
+	const mountComponent = (initialVNode: VNode, container: RendererElement) => {
+		const instance: ComponentInternalInstance = (initialVNode.component =
+			createComponentInstance(initialVNode));
 
-    const component = initialVNode.type as Component
-    if (component.setup) {
-      instance.render = component.setup() as InternalRenderFunction
-    }
+		const component = initialVNode.type as Component;
+		if (component.setup) {
+			instance.render = component.setup() as InternalRenderFunction;
+		}
 
-    setupRenderEffect(instance, initialVNode, container)
-  }
+		setupRenderEffect(instance, initialVNode, container);
+	};
 
-  const setupRenderEffect = (
-    instance: ComponentInternalInstance,
-    initialVNode: VNode,
-    container: RendererElement,
-  ) => {
-    const componentUpdateFn = () => {
-      const { render } = instance
+	const setupRenderEffect = (
+		instance: ComponentInternalInstance,
+		initialVNode: VNode,
+		container: RendererElement,
+	) => {
+		const componentUpdateFn = () => {
+			const { render } = instance;
 
-      if (!instance.isMounted) {
-        const subTree = (instance.subTree = normalizeVNode(render()))
-        patch(null, subTree, container)
-        initialVNode.el = subTree.el
-        instance.isMounted = true
-      } else {
-        let { next, vnode } = instance
-        
-        if (next) {
-          next.el = vnode.el
-          next.component = instance
-          instance.vnode = next
-          instance.next = null
-        } else {
-          next = vnode
-        }
+			if (!instance.isMounted) {
+				const subTree = (instance.subTree = normalizeVNode(render()));
+				patch(null, subTree, container);
+				initialVNode.el = subTree.el;
+				instance.isMounted = true;
+			} else {
+				let { next, vnode } = instance;
 
-        const prevTree = instance.subTree
-        const nextTree = normalizeVNode(render())
-        instance.subTree = nextTree
+				if (next) {
+					next.el = vnode.el;
+					next.component = instance;
+					instance.vnode = next;
+					instance.next = null;
+				} else {
+					next = vnode;
+				}
 
-        patch(prevTree, nextTree, hostParentNode(prevTree.el!)!)
-        next.el = nextTree.el
-      }
-    }
+				const prevTree = instance.subTree;
+				const nextTree = normalizeVNode(render());
+				instance.subTree = nextTree;
 
-    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn))
-    const update = (instance.update = () => effect.run())
-    update()
-  }
+				patch(prevTree, nextTree, hostParentNode(prevTree.el!)!);
+				next.el = nextTree.el;
+			}
+		};
 
-  const updateComponent = (n1: VNode, n2: VNode) => {
-    const instance = (n2.component = n1.component)!
-    instance.next = n2
-    instance.update()
-  }
+		const effect = (instance.effect = new ReactiveEffect(componentUpdateFn));
+		const update = (instance.update = () => effect.run());
+		update();
+	};
 
-  const mountElement = (vnode: VNode, container: RendererElement) => {
-    let el: RendererElement
-    const { type, props } = vnode
-    el = vnode.el = hostCreateElement(type as string)
+	const updateComponent = (n1: VNode, n2: VNode) => {
+		const instance = (n2.component = n1.component)!;
+		instance.next = n2;
+		instance.update();
+	};
 
-    mountChildren(vnode.children as VNode[], el)
+	const mountElement = (vnode: VNode, container: RendererElement) => {
+		let el: RendererElement;
+		const { type, props } = vnode;
+		el = vnode.el = hostCreateElement(type as string);
 
-    if (props) {
-      for (const key in props) {
-        hostPatchProp(el, key, props[key])
-      }
-    }
+		mountChildren(vnode.children as VNode[], el);
 
-    hostInsert(el, container)
-  }
+		if (props) {
+			for (const key in props) {
+				hostPatchProp(el, key, props[key]);
+			}
+		}
 
-  const mountChildren = (children: VNode[], container: RendererElement) => {
-    for (let i = 0; i < children.length; i++) {
-      const child = (children[i] = normalizeVNode(children[i]))
-      patch(null, child, container)
-    }
-  }
+		hostInsert(el, container);
+	};
 
-  const patchElement = (n1: VNode, n2: VNode) => {
-    const el = (n2.el = n1.el!)
+	const mountChildren = (children: VNode[], container: RendererElement) => {
+		for (let i = 0; i < children.length; i++) {
+			const child = (children[i] = normalizeVNode(children[i]));
+			patch(null, child, container);
+		}
+	};
 
-    const props = n2.props
+	const patchElement = (n1: VNode, n2: VNode) => {
+		const el = (n2.el = n1.el!);
 
-    patchChildren(n1, n2, el)
+		const props = n2.props;
 
-    for (const key in props) {
-      if (props[key] !== (n1.props?.[key] ?? {})) {
-        hostPatchProp(el, key, props[key])
-      }
-    }
-  }
+		patchChildren(n1, n2, el);
 
-  const patchChildren = (n1: VNode, n2: VNode, container: RendererElement) => {
-    const c1 = n1.children as VNode[]
-    const c2 = n2.children as VNode[]
+		for (const key in props) {
+			if (props[key] !== (n1.props?.[key] ?? {})) {
+				hostPatchProp(el, key, props[key]);
+			}
+		}
+	};
 
-    for (let i = 0; i < c2.length; i++) {
-      const child = (c2[i] = normalizeVNode(c2[i]))
-      patch(c1[i], child, container)
-    }
-  }
+	const patchChildren = (n1: VNode, n2: VNode, container: RendererElement) => {
+		const c1 = n1.children as VNode[];
+		const c2 = n2.children as VNode[];
 
-  const processText = (
-    n1: VNode | null,
-    n2: VNode,
-    container: RendererElement,
-  ) => {
-    if (n1 == null) {
-      hostInsert((n2.el = hostCreateText(n2.children as string)), container)
-    } else {
-      const el = (n2.el = n1.el!)
-      if (n2.children !== n1.children) {
-        hostSetText(el, n2.children as string)
-      }
-    }
-  }
+		for (let i = 0; i < c2.length; i++) {
+			const child = (c2[i] = normalizeVNode(c2[i]));
+			patch(c1[i], child, container);
+		}
+	};
 
-  return { render }
+	const processText = (
+		n1: VNode | null,
+		n2: VNode,
+		container: RendererElement,
+	) => {
+		if (n1 == null) {
+			hostInsert((n2.el = hostCreateText(n2.children as string)), container);
+		} else {
+			const el = (n2.el = n1.el!);
+			if (n2.children !== n1.children) {
+				hostSetText(el, n2.children as string);
+			}
+		}
+	};
+
+	return { render };
 }

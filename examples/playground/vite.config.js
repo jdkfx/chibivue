@@ -1,12 +1,12 @@
-import path, { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { defineConfig } from 'vite';
+import path, { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vite";
 
-const dirname = path.dirname(fileURLToPath(new URL(import.meta.url)))
+const dirname = path.dirname(fileURLToPath(new URL(import.meta.url)));
 export default defineConfig({
-  resolve: {
-    alias: {
-      chibivue: path.resolve(dirname, '../../packages'),
-    },
-  },
-})
+	resolve: {
+		alias: {
+			chibivue: path.resolve(dirname, "../../packages"),
+		},
+	},
+});
