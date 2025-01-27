@@ -1,4 +1,5 @@
 export type componentOptions = {
+	props?: Record<string, any>;
 	render?: Function;
-	setup?: () => Function;
+	setup?: (props: Record<string, any>) => Function;
 };
