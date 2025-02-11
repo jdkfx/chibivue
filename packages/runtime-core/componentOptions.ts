@@ -4,6 +4,6 @@ export type componentOptions = {
 	setup?: (
 		props: Record<string, any>,
 		ctx: { emit: (event: string, ...args: any[]) => void },
-	) => Function;
+	) => Function | void;
 	template?: string;
 };
