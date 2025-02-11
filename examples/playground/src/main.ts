@@ -12,6 +12,7 @@ const app = createApp({
 		});
 	},
 
+	// TODO: templateが正しく描画されていないので正しく描画されるように修正する必要がある
 	template: `
 		<div class="container" style="text-align: center">
 			<h2 id="hello">Hello, World!</h2>
