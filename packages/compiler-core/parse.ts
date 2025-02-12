@@ -42,7 +42,7 @@ function parseChildren(
 
 	while (!isEnd(context, ancestors)) {
 		const s = context.source;
-		let node: TemplateChildNode | undefined;
+		let node: TemplateChildNode | undefined = undefined;
 
 		if (s[0] === "<") {
 			if (/[a-z]/i.test(s[1])) {
@@ -97,7 +97,7 @@ function last<T>(xs: T[]): T | undefined {
 function startsWithEndTagOpen(source: string, tag: string): boolean {
 	return (
 		startsWith(source, "</") &&
-		source.slice(2, 2 | tag.length).toLowerCase() === tag.toLowerCase() &&
+		source.slice(2, 2 + tag.length).toLowerCase() === tag.toLowerCase() &&
 		/[\t\r\n\f />]/.test(source[2 + tag.length] || ">")
 	);
 }
