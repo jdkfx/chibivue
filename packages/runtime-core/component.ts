@@ -24,7 +24,7 @@ export interface ComponentInternalInstance {
 }
 
 export type InternalRenderFunction = {
-	(): VNodeChild;
+	(ctx: Data): VNodeChild;
 };
 
 export function createComponentInstance(
@@ -44,6 +44,7 @@ export function createComponentInstance(
 		propsOptions: type.props || {},
 		props: {},
 		emit: null!,
+		setupState: {},
 	};
 
 	instance.emit = emit.bind(null, instance);
