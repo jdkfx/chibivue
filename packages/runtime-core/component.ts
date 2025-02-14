@@ -20,6 +20,7 @@ export interface ComponentInternalInstance {
 	propsOptions: Props;
 	props: Data;
 	emit: (event: string, ...args: any[]) => void;
+	setupState: Data;
 }
 
 export type InternalRenderFunction = {
@@ -62,9 +63,17 @@ export const setupComponent = (instance: ComponentInternalInstance) => {
 
 	const component = instance.type as Component;
 	if (component.setup) {
-		instance.render = component.setup(instance.props, {
+		const setupResult = component.setup(instance.props, {
 			emit: instance.emit,
 		}) as InternalRenderFunction;
+
+		if (typeof setupResult === "function") {
+			instance.render = setupResult;
+		} else if (typeof setupResult === "object" && setupResult !== null) {
+			instance.setupState = setupResult;
+		} else {
+			// ..
+		}
 	}
 
 	if (compile && !component.render) {

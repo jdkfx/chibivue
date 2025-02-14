@@ -44,7 +44,9 @@ function parseChildren(
 		const s = context.source;
 		let node: TemplateChildNode | undefined = undefined;
 
-		if (s[0] === "<") {
+		if (startsWith(s, "{{")) {
+			node = parseInterpolation(context);
+		} else if (s[0] === "<") {
 			if (/[a-z]/i.test(s[1])) {
 				node = parseElement(context, ancestors);
 			}
