@@ -14,5 +14,8 @@
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@types/node": "^22.10.1"
+	},
+	"dependencies": {
+		"vite": "^6.1.0"
 	}
 }
