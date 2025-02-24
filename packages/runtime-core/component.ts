@@ -1,7 +1,7 @@
 import { ReactiveEffect } from "../reactivity";
 import { emit } from "./componentEmits";
 import { componentOptions as ComponentOptions } from "./componentOptions";
-import { initProps, Props } from "./componentProps";
+import { Props, initProps } from "./componentProps";
 import { VNode, VNodeChild } from "./vnode";
 
 export type Component = ComponentOptions;
@@ -82,5 +82,10 @@ export const setupComponent = (instance: ComponentInternalInstance) => {
 		if (template) {
 			instance.render = compile(template);
 		}
+	}
+
+	const { render } = component;
+	if (render) {
+		instance.render = render as InternalRenderFunction;
 	}
 };
